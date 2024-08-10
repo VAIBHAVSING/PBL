@@ -12,3 +12,104 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id         String       @id @default(cuid())
+  username   String       @unique
+  email      String       @unique
+  password   String
+  Name       String
+  CreatedAt  DateTime     @default(now())
+  Token      String?
+  Watchlist  Watchlist[]
+  Alert      Alert[]
+  Session    Session[]
+  Portfolios Portfolios[]
+  Transection   Transection[]
+  OrderBook_updated DateTime @default(now())
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Watchlist {
+  id         String     @id @default(cuid())
+  userId     String
+  Name       String
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  CreatedAt  DateTime   @default(now())
+  Asset_Type Asset_Type
+}
+
+enum Asset_Type {
+  STOCK
+  CRYPTO
+  MUTUALFUND
+}
+
+enum Alert_Method {
+  EMAIL
+  TELEGRAM
+  PUSH
+  WHATSAPP
+}
+
+enum Exchanges {
+  NSE
+  BSE
+  CRYPTO
+}
+
+model Alert {
+  id             String       @id @default(cuid())
+  userId         String
+  Alert_Name     String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Asset_Type     Asset_Type
+  Exchanges      Exchanges
+  Asset_Symbol   String
+  Condition_Type String
+  Target_Value   Decimal      @db.Decimal(18, 8)
+  Alert_Method   Alert_Method
+  ISActive       Boolean      @default(true)
+  CreatedAt      DateTime     @default(now())
+}
+
+model Portfolios {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  CreatedAt DateTime   @default(now())
+  P_Name    String
+  Holdings  Holdings[]
+}
+
+model Holdings {
+  id            String        @id @default(cuid())
+  P_id          String
+  Portfolio     Portfolios    @relation(fields: [P_id], references: [id], onDelete: Cascade)
+  Asset_Type    Asset_Type
+  Exchanges     Exchanges
+  Asset_Symbol  String
+  Quantity      Decimal       @db.Decimal(18, 8)
+  Average_Price Decimal       @db.Decimal(18, 8)
+  CreatedAt     DateTime      @default(now())
+  Order_Completed Boolean @default(false)
+  Transection   Transection[]
+}
+
+model Transection {
+  id       String   @id @default(cuid())
+  H_id     String
+  Holdings Holdings @relation(fields: [H_id], references: [id])
+  Succeed  Boolean @default(false)
+  CreatedAt DateTime @default(now())
+  Amount   Decimal   @db.Decimal(18, 8) 
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
